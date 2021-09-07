@@ -97,9 +97,9 @@ def create_cmd_line(args):
 
 
 def run_bench(args):
-    sessions = list(range(1, args.max_sessions))
+    sessions = list(range(1, args.max_sessions+1))
     #sessions = [1]
-    #freqs = list(range(0, args.max_detection_freq))
+    #freqs = list(range(0, args.max_detection_freq+1))
     freqs = [0, 1, 2, 5, 10, 30]
     #freqs = [0]
     args_grid = product(sessions, freqs)
