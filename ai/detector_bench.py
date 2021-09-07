@@ -22,7 +22,7 @@ from itertools import product
 pd.options.display.width = 0
 pd.set_option('display.max_columns', None)
 
-LPB_CMD_LINE = './livepeer_bench  -in {in_file} -transcodingOptions P240p30fps16x9 -concurrentSessions {sessions} -detectionFreq {detection_freq} -nvidia {gpu_num} -outPrefix /tmp/'
+LPB_CMD_LINE = './livepeer_bench  -in {in_file} -transcodingOptions transcodingOptions.json -concurrentSessions {sessions} -detectionFreq {detection_freq} -nvidia {gpu_num} -outPrefix /tmp/'
 
 def split_no_empty(string, sep=' '):
     return list(filter(None, string.split(sep)))
