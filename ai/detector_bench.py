@@ -24,35 +24,44 @@ pd.set_option('display.max_columns', None)
 
 LPB_CMD_LINE = './livepeer_bench  -in {in_file} -transcodingOptions transcodingOptions.json -concurrentSessions {sessions} -detectionFreq {detection_freq} -nvidia {gpu_num} -outPrefix /tmp/'
 
+
 def split_no_empty(string, sep=' '):
     return list(filter(None, string.split(sep)))
 
+
 def read_human(metric_str):
     if 'g' in metric_str:
-        metric = float(metric_str.replace('g', ''))*1024**3
+        metric = float(metric_str.replace('g', '')) * 1024 ** 3
     elif 'm' in metric_str:
-        metric = float(metric_str.replace('g', ''))*1024**2
+        metric = float(metric_str.replace('g', '')) * 1024 ** 2
+    elif 't' in metric_str:
+        metric = float(metric_str.replace('t', '')) * 1024 ** 4
     else:
         metric = float(metric_str)
     return metric
+
 
 def get_process_stats(pid):
     top_proc = subprocess.Popen(("top -b -n 1 -d 0.1 -p %s" % pid).split(), stdout=subprocess.PIPE)
     cpu_mem_str = split_no_empty(top_proc.communicate()[0].decode('ascii'), '\n')[-1]
     cpu = read_human(split_no_empty(cpu_mem_str)[8])
-    # top output is in kb
-    mem = read_human(split_no_empty(cpu_mem_str)[5])*1024
+    mem = read_human(split_no_empty(cpu_mem_str)[5]) * 1024
+    if mem < 1024 * 1024:
+        # top output is in kb
+        mem *= 1024
     # read GPU stats
     handle = nvidia_smi.nvmlDeviceGetHandleByIndex(0)
     res = nvidia_smi.nvmlDeviceGetUtilizationRates(handle)
     mem_res = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
     return cpu, mem, res.gpu, mem_res.used
 
+
 def read_stream_lines(stream):
     line = stream.readline().decode('utf-8').strip()
-    if line is None or line=='':
+    if line is None or line == '':
         return []
     return [line]
+
 
 def capture_process_data(arguments):
     res = defaultdict(lambda: [])
@@ -98,14 +107,14 @@ def create_cmd_line(args):
 
 def run_bench(args):
     try:
-        sessions = list(range(1, int(args.sessions_list)+1))
+        sessions = list(range(1, int(args.sessions_list) + 1))
     except:
         sessions = eval(args.sessions_list)
-    #sessions = [1]
-    #freqs = list(range(0, args.max_detection_freq+1))
+    # sessions = [1]
+    # freqs = list(range(0, args.max_detection_freq+1))
     freqs = eval(args.detection_freq_list)
-    #freqs = [0, 1, 2, 5, 10, 30]
-    #freqs = [0]
+    # freqs = [0, 1, 2, 5, 10, 30]
+    # freqs = [0]
     args_grid = product(sessions, freqs)
     res_list = []
     for sess, freq in args_grid:
@@ -140,11 +149,12 @@ def run_bench(args):
         df.to_csv('bench_results.csv')
         print(df)
 
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--livepeer-bench', default='../../go-livepeer/livepeer_bench')
     ap.add_argument('--in-file', default='../../data/bbb/source.m3u8')
-    ap.add_argument('--sessions_list', default="10", type=str)
+    ap.add_argument('--sessions-list', default="10", type=str)
     ap.add_argument('--detection-freq-list', default="[0, 1, 2, 5, 10, 30]", type=str)
     ap.add_argument('--gpu-num', default=0)
     args = ap.parse_args()
