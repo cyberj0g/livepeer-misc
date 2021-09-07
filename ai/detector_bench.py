@@ -1,5 +1,9 @@
 """
 This script creates a CSV report from livepeer_bench output by running it with all combinations of number of sessions and detection frequency parameters
+
+Example (all paths are relative to livepeer_bench executable path, and results file will be created in livepeer_bench dir):
+
+python3 detector_bench.py --livepeer-bench ../../go-livepeer/livepeer_bench --max-sessions 2 --in-file ../bbb/source.m3u8
 """
 
 import os
@@ -127,9 +131,10 @@ def run_bench(args):
         res['sess_count'] = sess
         res['detect_freq'] = freq
         res_list.append(res)
-    df = pd.DataFrame(res_list)
-    df.drop(['lines', 'cpu_hist', 'gpu_hist', 'ram_hist', 'vram_hist', 'tail'], axis=1, inplace=True)
-    df.to_csv('bench_results.csv')
+        df = pd.DataFrame(res_list)
+        df.drop(['lines', 'cpu_hist', 'gpu_hist', 'ram_hist', 'vram_hist', 'tail'], axis=1, inplace=True)
+        df.to_csv('bench_results.csv')
+        print(df)
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
