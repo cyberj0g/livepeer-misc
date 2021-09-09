@@ -22,7 +22,7 @@ from itertools import product
 pd.options.display.width = 0
 pd.set_option('display.max_columns', None)
 
-LPB_CMD_LINE = './livepeer_bench  -in {in_file} -transcodingOptions transcodingOptions.json -concurrentSessions {sessions} -detectionFreq {detection_freq} -nvidia {gpu_num} -outPrefix /tmp/'
+LPB_CMD_LINE = './livepeer_bench  -in {in_file} -transcodingOptions transcodingOptions.json -concurrentSessions {sessions} -detectionFreq {detection_freq} -detectionSampleRate {detection_sample_rate} -nvidia {gpu_num} -outPrefix /tmp/'
 
 
 def split_no_empty(string, sep=' '):
@@ -110,15 +110,12 @@ def run_bench(args):
         sessions = list(range(1, int(args.sessions_list) + 1))
     except:
         sessions = eval(args.sessions_list)
-    # sessions = [1]
-    # freqs = list(range(0, args.max_detection_freq+1))
     freqs = eval(args.detection_freq_list)
-    # freqs = [0, 1, 2, 5, 10, 30]
-    # freqs = [0]
-    args_grid = product(sessions, freqs)
+    rates = eval(args.detection_sample_rate_list)
+    args_grid = product(sessions, freqs, rates)
     res_list = []
-    for sess, freq in args_grid:
-        runtime_args = {'sessions': sess, 'detection_freq': freq}
+    for sess, freq, rate in args_grid:
+        runtime_args = {'sessions': sess, 'detection_freq': freq, 'detection_sample_rate': rate}
         runtime_args.update(vars(args))
         cmd_line = create_cmd_line(runtime_args)
         print(cmd_line)
@@ -143,6 +140,7 @@ def run_bench(args):
 
         res['sess_count'] = sess
         res['detect_freq'] = freq
+        res['detect_sample_rate'] = rate
         res_list.append(res)
         df = pd.DataFrame(res_list)
         df.drop(['lines', 'cpu_hist', 'gpu_hist', 'ram_hist', 'vram_hist', 'tail'], axis=1, inplace=True)
@@ -155,7 +153,8 @@ if __name__ == '__main__':
     ap.add_argument('--livepeer-bench', default='../../go-livepeer/livepeer_bench')
     ap.add_argument('--in-file', default='../../data/bbb/source.m3u8')
     ap.add_argument('--sessions-list', default="10", type=str)
-    ap.add_argument('--detection-freq-list', default="[0, 1, 2, 5, 10, 30]", type=str)
+    ap.add_argument('--detection-freq-list', default="[1]", type=str)
+    ap.add_argument('--detection-sample-rate-list', default="[2, 5, 10, 30]", type=str)
     ap.add_argument('--gpu-num', default=0)
     args = ap.parse_args()
     os.chdir(os.path.dirname(args.livepeer_bench))
