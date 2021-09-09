@@ -51,6 +51,7 @@ def get_process_stats(pid):
         mem *= 1024
     # read GPU stats
     handle = nvidia_smi.nvmlDeviceGetHandleByIndex(0)
+    per_state = nvidia_smi.nvmlDeviceGetPerformanceState(handle)
     res = nvidia_smi.nvmlDeviceGetUtilizationRates(handle)
     mem_res = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
     return cpu, mem, res.gpu, mem_res.used
