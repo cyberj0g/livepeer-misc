@@ -16,8 +16,16 @@ import numpy as np
 import pandas as pd
 import argparse
 import tqdm
+import logging
 import nvidia_smi
 from itertools import product
+
+logger = logging.getLogger()
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='[%(asctime)s.%(msecs)03d]: %(process)d %(levelname)s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[logging.FileHandler('./logfile.log'), logging.StreamHandler()])
 
 pd.options.display.width = 0
 pd.set_option('display.max_columns', None)
@@ -45,10 +53,7 @@ def get_process_stats(pid):
     top_proc = subprocess.Popen(("top -b -n 1 -d 0.1 -p %s" % pid).split(), stdout=subprocess.PIPE)
     cpu_mem_str = split_no_empty(top_proc.communicate()[0].decode('ascii'), '\n')[-1]
     cpu = read_human(split_no_empty(cpu_mem_str)[8])
-    mem = read_human(split_no_empty(cpu_mem_str)[5]) * 1024
-    if mem < 1024 * 1024:
-        # top output is in kb
-        mem *= 1024
+    mem = read_human(split_no_empty(cpu_mem_str)[5])
     # read GPU stats
     handle = nvidia_smi.nvmlDeviceGetHandleByIndex(0)
     per_state = nvidia_smi.nvmlDeviceGetPerformanceState(handle)
@@ -72,7 +77,6 @@ def capture_process_data(arguments):
     stderr_finish = False
     stdout_finish = False
     while proc.returncode is None:
-        time.sleep(0.1)
         while True:
             # get cpu and ram usage
             cpu, mem, gpu, gpu_mem = get_process_stats(proc.pid)
@@ -134,10 +138,10 @@ def run_bench(args):
         res['max_ram'] = np.max(res['ram_hist'])
         res['max_vram'] = np.max(res['vram_hist'])
 
-        res['avg_cpu'] = np.mean(res['cpu_hist'])
-        res['avg_gpu'] = np.mean(res['gpu_hist'])
-        res['avg_ram'] = np.mean(res['ram_hist'])
-        res['avg_vram'] = np.mean(res['vram_hist'])
+        res['avg_cpu'] = np.mean(list(filter(None,res['cpu_hist'])))
+        res['avg_gpu'] = np.mean(list(filter(None,res['gpu_hist'])))
+        res['avg_ram'] = np.mean(list(filter(None,res['ram_hist'])))
+        res['avg_vram'] =np.mean(list(filter(None,res['vram_hist'])))
 
         res['sess_count'] = sess
         res['detect_freq'] = freq
