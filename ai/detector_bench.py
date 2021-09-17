@@ -63,7 +63,10 @@ def get_process_stats(pid):
 
 
 def read_stream_lines(stream):
-    line = stream.readline().decode('utf-8').strip()
+    try:
+        line = stream.readline().decode('utf-8').strip()
+    except:
+        return []
     if line is None or line == '':
         return []
     return [line]
